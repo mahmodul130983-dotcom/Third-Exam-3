@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Student Results</title>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #4f46e5;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .student-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .score-badge {
+      background: #e0e7ff;
+      color: #4f46e5;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .wrong-sec-title {
+      font-weight: 700;
+      color: #ef4444;
+      margin-bottom: 10px;
+    }
+    .wrong-item {
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .wrong-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+    .selected-ans {
+      color: #dc2626;
+    }
+    .correct-ans {
+      color: #16a34a;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>SUMU EXAM RESULTS DESHBOARD</h1>
+    <div id="results-container">ডাটা লোড হচ্ছে...</div>
+  </div>
+
+  <script>
+    // ⚙️ আপনার মূল index.html-এর ফায়ারবেজ কনফিগারেশনটি এখানেও বসাবেন
+    const firebaseConfig = {
+      apiKey: "AIzaSyCTgSqtcDRtvfbIECDFEv_2jAEgModArXc",
+  authDomain: "gk-exam-2.firebaseapp.com",
+  projectId: "gk-exam-2",
+  storageBucket: "gk-exam-2.firebasestorage.app",
+  messagingSenderId: "52008698353",
+  appId: "1:52008698353:web:08a24e1451711ab72f0450",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const resultsContainer = document.getElementById('results-container');
+
+    // ফায়ারবেজ থেকে ফলাফল লোড করা
+    db.collection("quiz_results 3").orderBy("time", "desc").get()
+    .then((querySnapshot) => {
+      resultsContainer.innerHTML = '';
+
+      if (querySnapshot.empty) {
+        resultsContainer.innerHTML = '<p style="text-align:center;">এখনও কেউ পরীক্ষা দেয়নি।</p>';
+        return;
+      }
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        
+        let wrongListHTML = '';
+        if (data.wrongQuestions && data.wrongQuestions.length > 0) {
+          data.wrongQuestions.forEach((item) => {
+            wrongListHTML += `
+              <div class="wrong-item">
+                <strong>${item.question}</strong>
+                <div>ইউজারের উত্তর: <span class="selected-ans">${item.selectedAnswer}</span></div>
+                <div>সঠিক উত্তর: <span class="correct-ans">${item.correctAnswer}</span></div>
+              </div>
+            `;
+          });
+        } else {
+          wrongListHTML = '<p style="color:#16a34a; font-weight:600;">কোনো প্রশ্ন ভুল করেনি! (সবগুলো সঠিক)</p>';
+        }
+
+        const cardHTML = `
+          <div class="card">
+            <div class="card-header">
+              <div class="student-name">শিক্ষার্থী: ${data.name}</div>
+              <div class="score-badge">স্কোর: ${data.score}</div>
+            </div>
+            <div class="stats">
+              <span>সঠিক: <strong style="color:#16a34a;">${data.correct}</strong></span>
+              <span>ভুল: <strong style="color:#dc2626;">${data.wrong}</strong></span>
+              <span>তারিখ: ${data.time ? new Date(data.time.toDate()).toLocaleString('bn-BD') : 'N/A'}</span>
+            </div>
+            <div class="wrong-sec-title">ভুল করা প্রশ্নের তালিকা:</div>
+            ${wrongListHTML}
+          </div>
+        `;
+
+        resultsContainer.innerHTML += cardHTML;
+      });
+    })
+    .catch((error) => {
+      console.error("ডাটা আনতে সমস্যা হয়েছে: ", error);
+      resultsContainer.innerHTML = '<p style="color:red; text-align:center;">ডাটা লোড করতে সমস্যা হয়েছে। Firebase Config ঠিক আছে কিনা চেক করুন।</p>';
+    });
+  </script>
+</body>
+</html>
