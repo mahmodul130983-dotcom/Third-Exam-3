@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GK THIRD EXAM</title>
+  
+  <!-- Firebase SDK (Google-এর ফ্রি ডাটাবেজ) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --correct-bg: #dcfce7;
+      --correct-border: #22c55e;
+      --correct-text: #15803d;
+      --wrong-bg: #fee2e2;
+      --wrong-border: #ef4444;
+      --wrong-text: #b91c1c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .quiz-card { background: var(--card-bg); width: 100%; max-width: 650px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); padding: 32px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border-color); }
+    .progress-text { font-size: 14px; font-weight: 600; color: var(--primary-color); background: rgba(79, 70, 229, 0.1); padding: 6px 14px; border-radius: 20px; }
+    .progress-bar-container { width: 100%; height: 8px; background-color: var(--border-color); border-radius: 10px; margin-bottom: 24px; overflow: hidden; }
+    .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+    .question-title { font-size: 20px; font-weight: 700; line-height: 1.4; margin-bottom: 20px; }
+    .options-grid { display: flex; flex-direction: column; gap: 12px; }
+    .option-btn { width: 100%; padding: 14px 18px; font-size: 16px; text-align: left; background: transparent; color: var(--text-main); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: rgba(79, 70, 229, 0.05); }
+    .option-btn.correct { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: var(--correct-text) !important; font-weight: 600; }
+    .option-btn.wrong { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: var(--wrong-text) !important; font-weight: 600; }
+    .footer-actions { margin-top: 28px; display: flex; justify-content: flex-end; }
+    .next-btn { background-color: var(--primary-color); color: white; border: none; padding: 12px 28px; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer; display: none; }
+    
+    .user-info-screen, .result-screen { text-align: center; display: none; }
+    .user-info-screen input { width: 100%; padding: 12px; font-size: 16px; margin: 15px 0; border: 2px solid var(--border-color); border-radius: 8px; }
+    .start-btn { background-color: var(--primary-color); color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; }
+    
+    .score-circle { width: 150px; height: 150px; border-radius: 50%; background: rgba(79, 70, 229, 0.1); color: var(--primary-color); display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 20px auto; font-size: 36px; font-weight: 800; }
+    .score-details { display: flex; justify-content: space-around; margin: 20px 0; background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid var(--border-color); }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-card">
+    
+    <!-- ১. পরীক্ষার্থীর নাম দেওয়ার স্ক্রিন -->
+    <div id="user-info-view" class="user-info-screen" style="display: block;">
+      <h2>Let's start now</h2>
+      <p style="color: var(--text-muted); margin-top: 5px;">Enter your name</p>
+      <input type="text" id="user-name" placeholder="Enter your name...">
+      <button class="start-btn" onclick="startQuiz()">Start now</button>
+    </div>
+
+    <!-- ২. মূল কুইজ স্ক্রিন -->
+    <div id="quiz-view" style="display: none;">
+      <div class="top-bar">
+        <h2 id="display-name" style="font-size: 16px;"></h2>
+        <span class="progress-text" id="progress-text">Question 1/40</span>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+
+      <div class="question-title" id="question-title">QUESTION LOADING...</div>
+
+      <div class="options-grid" id="options-grid"></div>
+
+      <div class="footer-actions">
+        <button class="next-btn" id="next-btn" onclick="handleNextQuestion()">NEXT QUESTION ➔</button>
+      </div>
+    </div>
+
+    <!-- ৩. রেজাল্ট স্ক্রিন -->
+    <div class="result-screen" id="result-view">
+      <h2>Exam finish!</h2>
+      <p style="color: var(--text-muted)">tumar folafol joma hoise pakhi</p>
+      
+      <div class="score-circle">
+        <div id="final-score">০.০০</div>
+        <span style="font-size: 14px; color: var(--text-muted);">Total score / 40</span>
+      </div>
+
+      <div class="score-details">
+        <div><strong style="color: var(--correct-border); font-size: 20px;" id="correct-count">০</strong><br><small>সঠিক (+1.00)</small></div>
+        <div><strong style="color: var(--wrong-border); font-size: 20px;" id="wrong-count">০</strong><br><small>ভুল (-0.25)</small></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ⚙️ আপনার ফায়ারবেজ কনফিগারেশন এখানে বসাবেন
+    const firebaseConfig = {
+     apiKey: "AIzaSyCTgSqtcDRtvfbIECDFEv_2jAEgModArXc",
+  authDomain: "gk-exam-2.firebaseapp.com",
+  projectId: "gk-exam-2",
+  storageBucket: "gk-exam-2.firebasestorage.app",
+  messagingSenderId: "52008698353",
+  appId: "1:52008698353:web:08a24e1451711ab72f0450",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ৪০টি প্রশ্ন এবং সঠিক উত্তরের ইনডেক্স (0 থেকে শুরু)
+    const questionsDatabase = [
+      { question: "1. বাংলায় স্বাধীন সুলতানি শাসনের প্রতিষ্ঠাতা হিসেবে কাকে গণ্য করা হয়?", options: ["শামসুদ্দিন ইলিয়াস শাহ ", "আলাউদ্দিন হোসেন শাহ", "শশাঙ্ক", "গিয়াসউদ্দিন আজম শাহ"], correct: 0 },
+      { question: "2. কনস্টান্টিনোপলের পতন ঘটে কত সালে?", options: ["১২০৪", "১৪৫৩", "১৪৯৮","১৫১৭"], correct: 1 },
+      { question: "3.  ইউরোপে ধর্মসংস্কার আন্দোলনের সূচনার সঙ্গে কার নাম বিশেষভাবে জড়িত?", options: ["জন ক্যালভিন", "মার্টিন লুথার", "টমাস মোর ", "ইরাসমাস"], correct: 1 },
+      { question: "4. আমেরিকার স্বাধীনতার ঘোষণাপত্র গৃহীত হয় কবে?", options: ["৪ জুলাই ১৭৭৬", "১৪ জুলাই ১৭৮৯", "১৭ সেপ্টেম্বর ১৭৮৭", "৩ সেপ্টেম্বর ১৭৮৩"], correct: 0 },
+      { question: "5. ভিয়েনা কংগ্রেস অনুষ্ঠিত হয়েছিল কোন সময়কালে?", options: ["১৭৮৯–১৭৯১", "১৮০৪–১৮০৭", "১৮১৪–১৮১৫", " ১৮৪৮–১৮৪৯" ], correct: 2 },
+      { question: "6.প্রথম বিশ্বযুদ্ধের অবসানের সঙ্গে সম্পর্কিত ১৯১৮ সালের যুদ্ধবিরতি চুক্তি স্বাক্ষরিত হয় কোথায়?", options: ["ভার্সাই প্রাসাদ", "ব্রেস্ট-লিটভস্ক", "কম্পিয়েনের বন", "জেনেভা"], correct: 2 },
+      { question: "7. ২০২৬ সালের জাতীয় সংসদ নির্বাচনে বিএনপি কতটি আসন পেয়েছিল বলে প্রকাশিত প্রতিবেদনে উল্লেখ করা হয়?", options: ["১৫১", "১৮৫", "২১২", "২৩৫"], correct: 2 },
+      { question: "8.২০২৬ সালের অক্টোবরে IMF ও বিশ্বব্যাংকের বার্ষিক সভা কোন শহরে অনুষ্ঠিত হচ্ছে?", options: ["জাকার্তা", "ব্যাংকক", "টোকিও", "জেনেভা"], correct: 1 },
+      { question: "9.IMF–বিশ্বব্যাংকের ২০২৬ সালের বার্ষিক সভায় বাংলাদেশের অর্থনৈতিক সংস্কার পরিকল্পনা উপস্থাপনকারী প্রতিনিধিদলের নেতৃত্ব দিচ্ছেন কে?", options: ["আমির খসরু মাহমুদ চৌধুরী", "সালেহউদ্দিন আহমেদ", " মুস্তফা কামাল","আবুল হাসান মাহমুদ আলী"], correct: 0 },
+      { question: "10. বৈশ্বিক অর্থায়ন ও অর্থনৈতিক সংস্কার নিয়ে বাংলাদেশের প্রতিনিধিদল যে বার্ষিক সভায় যোগ দিয়েছে, সেটি কোন দুটি প্রতিষ্ঠানের যৌথ আয়োজন?", options: ["IMF ও World Bank", "WTO ও UNCTAD", " WHO ও UNESCO", "ADB ও ASEAN"], correct: 0 },
+      { question: "11.. সাঁওতাল বিদ্রোহের সঙ্গে কোন অঞ্চলটি বিশেষভাবে সম্পর্কিত?",options: ["বরেন্দ্র অঞ্চল", "দামিন-ই-কোহ", "ভাওয়াল অঞ্চল", "সুন্দরবন অঞ্চল"],correct: 1},
+      { question: "12. চট্টগ্রাম অস্ত্রাগার লুণ্ঠন অভিযানের প্রধান নেতা কে ছিলেন?", options: ["ক্ষুদিরাম বসু", "বাঘা যতীন", "সূর্য সেন", "প্রফুল্ল চাকী"], correct: 2 },
+      { question: "13. ভারতীয় জাতীয় কংগ্রেসের প্রথম মুসলিম সভাপতি কে ছিলেন?",options: ["মওলানা আবুল কালাম আজাদ", "বদরুদ্দিন তায়েবজি", "মুহাম্মদ আলী জিন্নাহ", "হাকিম আজমল খান"],correct: 1}, 
+      { question: "14. তেভাগা আন্দোলনে ভাগচাষিরা উৎপাদিত ফসলের কত অংশ দাবি করেছিলেন?",options: ["এক-চতুর্থাংশ", "এক-তৃতীয়াংশ", "অর্ধেক", "দুই-তৃতীয়াংশ"],correct: 3 },
+      { question: "15. 'Concert for Bangladesh' আয়োজনের সঙ্গে কোন সংগীতশিল্পী দুজন বিশেষভাবে যুক্ত ছিলেন?",options: ["বব ডিলান ও এলভিস প্রিসলি", "জর্জ হ্যারিসন ও রবিশঙ্কর", "জন লেনন ও পণ্ডিত রবিশঙ্কর", "মিক জ্যাগার ও জর্জ হ্যারিসন"], correct: 1},
+      { question: "16.  ত্রিশ বছরের যুদ্ধের অবসান ঘটানো চুক্তির নাম কী?", options: ["ভার্সাই চুক্তি", "উট্রেখট চুক্তি", "ওয়েস্টফেলিয়ার শান্তিচুক্তি", "প্যারিস চুক্তি"], correct: 2 },
+      { question: "17. রোসেটা পাথর পাঠোদ্ধারের মাধ্যমে কোন প্রাচীন লিপি বুঝতে গুরুত্বপূর্ণ ভূমিকা রাখে?",options: ["কিউনিফর্ম", "মিশরীয় হায়ারোগ্লিফিক", "ব্রাহ্মী", "আরামাইক"], correct: 1},
+      { question: "18.  মেইজি পুনর্গঠন কোন দেশের আধুনিকায়নের ইতিহাসে গুরুত্বপূর্ণ ঘটনা?",options: ["চীন", "জাপান", "দক্ষিণ কোরিয়া", "থাইল্যান্ড"],correct: 1},
+      { question: "19. দ্বিতীয় বিশ্বযুদ্ধের পর ইউরোপের অর্থনৈতিক পুনর্গঠনের জন্য কোন পরিকল্পনা নেওয়া হয়েছিল?", options: ["মার্শাল পরিকল্পনা", "মনরো নীতি", "ট্রুম্যান-ডকট্রিন", "ডজ পরিকল্পনা"],correct: 0 },
+      { question: "20.ব্রেটন উডস সম্মেলনের ফলস্বরূপ কোন দুটি প্রতিষ্ঠানের ভিত্তি তৈরি হয়?",options: ["WTO ও WHO", "IMF ও IBRD", "UNESCO ও UNICEF", "NATO ও OECD"],correct: 1},
+      { question: "21. বার্লিন অবরোধ ও বিমানযোগে সরবরাহ অভিযান কোন ঐতিহাসিক দ্বন্দ্বের অংশ?",options: ["প্রথম বিশ্বযুদ্ধ", "শীতল যুদ্ধ", "ক্রিমিয়ার যুদ্ধ", "ভিয়েতনাম যুদ্ধ"],correct: 1},
+      { question: "22.  দক্ষিণ আফ্রিকায় বর্ণবাদবিরোধী আন্দোলনের সঙ্গে কোন নেতা সবচেয়ে বেশি পরিচিত?",options: ["প্যাট্রিক লুমুম্বা", "নেলসন ম্যান্ডেলা", "জুলিয়াস নিয়েরেরে", "কোয়ামে নক্রুমা"],correct: 1},
+      { question: "23.২০২৬ সালের নির্বাচনে জামায়াতে ইসলামী কতটি আসন পেয়েছে বলে প্রকাশিত ফলাফলে উল্লেখ করা হয়?",options: ["৫৮", "৬৮", "৭৭", "৮১"],correct: 1
+      { question: "24.প্রকাশিত ২০২৬ সালের নির্বাচনী ফলাফলে বিএনপি এককভাবে কতটি আসন পেয়েছে?",options: ["২০৯", "২১২", "১৯৮", "২২১"],correct: 0
+      { question: "25. একই IMF পূর্বাভাসে বাংলাদেশের মূল্যস্ফীতি কত হতে পারে বলে উল্লেখ করা হয়?",options: ["৬.২%", "৭.৫%", "৯.১%", "১০.৯%"], correct: 3 },
+      { question: "26. বিশ্বব্যাংক গ্রুপের IBRD-এর পূর্ণরূপ কোনটি?", options: ["International Bank for Reconstruction and Development", "International Bureau for Research and Development", "International Board for Regional Development", "Institute of Banking Reform and Development"],correct: 0 },
+      { question: "27. বাংলাদেশের ২০২৬ সালের নির্বাচনে মোট ভোটারসংখ্যা প্রায় কত ছিল বলে নির্বাচন-সংক্রান্ত তথ্যে উল্লেখ করা হয়?",options: ["৯.৮ কোটি", "১০.৫ কোটি", "12.77 কোটি", "১৪.২ কোটি"], correct: 2},
+      { question: "28. "35. উন্নয়নশীল দেশগুলোর ঋণ পরিশোধের চাপ নিয়ে ২০২৬ সালে G24-এর আলোচনায় কোন বিষয়টি গুরুত্ব পায়?",options: ["ঋণ পরিশোধ ব্যয় ও উচ্চ ঋণগ্রহণ খরচ", "শুধু পর্যটন আয়", "শুধু অলিম্পিক আয়োজন", "মহাকাশ পর্যটনের ব্যয়"],correct: 0},
+      { question: "29. বাংলাদেশের ২০২৬–২৭ অর্থবছরের প্রবৃদ্ধি নিয়ে IMF-এর পূর্বাভাসে কোন বিষয়টি বিশেষভাবে আলোচনায় এসেছে?", options: [" প্রবৃদ্ধি ১০ শতাংশ ছাড়িয়ে যাওয়ার সম্ভাবনা", "প্রবৃদ্ধি কমে ৩.২ শতাংশ হওয়ার পূর্বাভাস", "অর্থনৈতিক প্রবৃদ্ধি পুরোপুরি বন্ধ হয়ে যাওয়া", " বাংলাদেশ ইউরোজোনে যোগ দেওয়া"], correct: 1 },
+      { question: "30.   অর্থনীতিতে 'Fiscal Consolidation' বলতে সাধারণত কী বোঝায়?",options: ["সরকারি আয়-ব্যয়ের ভারসাম্য উন্নত করে ঘাটতি ও ঋণের চাপ কমানো", "সব সরকারি ব্যয় দ্বিগুণ করা", "রপ্তানি পুরোপুরি বন্ধ করা", "কেন্দ্রীয় ব্যাংক বিলুপ্ত করা"],correct: 0},
+      { question: "31.GDP প্রবৃদ্ধির হার কমে যাওয়া এবং মূল্যস্ফীতি উঁচু থাকা একসঙ্গে কোন ধরনের অর্থনৈতিক চ্যালেঞ্জ তৈরি করতে পারে?",options: ["জীবনযাত্রার ব্যয় বৃদ্ধি ও প্রবৃদ্ধির চাপ", "সব পণ্যের দাম নিশ্চিতভাবে কমে যাওয়া", "বেকারত্ব পুরোপুরি বিলুপ্ত হওয়া", "সরকারি ঋণ স্বয়ংক্রিয়ভাবে শূন্য হওয়া"],correct: 0}, 
+      { question: "32. কোন চুক্তির মাধ্যমে ইউরোপীয় অর্থনৈতিক সম্প্রদায় (EEC) প্রতিষ্ঠিত হয়?", options: ["মাষ্ট্রিখ্ট চুক্তি", "রোম চুক্তি", "ভার্সাই চুক্তি", "লিসবন চুক্তি"], correct: 1 },
+      { question: "33.অর্থনৈতিক সংস্কারের আলোচনায় ব্যাংকিং খাতে শৃঙ্খলা ও কর-রাজস্ব বাড়ানোর লক্ষ্য প্রধানত কী উন্নত করতে সাহায্য করে?",options: ["আর্থিক স্থিতিশীলতা ও সরকারের রাজস্ব সক্ষমতা", "শুধু বিনোদন খাত", "শুধু ক্রীড়া অবকাঠামো", "শুধু পর্যটন প্রচার"],correct: 0}
+      { question: "34. ‘FY2026–27’ অর্থবছর বলতে বাংলাদেশের ক্ষেত্রে কোন সময়কাল বোঝায়?", options: ["জানুয়ারি–ডিসেম্বর ২০২৬", "জুলাই ২০২৬–জুন ২০২৭", "এপ্রিল ২০২৬–মার্চ ২০২৭", "অক্টোবর ২০২৬–সেপ্টেম্বর ২০২৭"], correct: 1 },
+      { question: "35.বাংলার প্রাচীন ইতিহাসে সমতট জনপদটি প্রধানত কোন অঞ্চলে অবস্থিত ছিল?",options: ["উত্তরবঙ্গ", "দক্ষিণ-পূর্ব বাংলা", "পশ্চিম রাঢ়", "পশ্চিমবঙ্গের মালভূমি"], correct: 1},
+      { question: "36. অ্যান্টার্কটিকার বরফকে বিশাল কণা শনাক্তকারী হিসেবে ব্যবহার করার সঙ্গে কোন বিজ্ঞানীর নাম যুক্ত?", options: ["ফ্রান্সিস হালজেন", "পিটার হিগস", "রজার পেনরোজ", "কিপ থর্ন"], correct: 0 },
+      { question: "37.ওষুধ তৈরিতে অণুর ডান ও বাম প্রতিবিম্ব-রূপের পার্থক্য কেন গুরুত্বপূর্ণ?", options: ["দুটি রূপের রাসায়নিক ও জৈবিক আচরণ ভিন্ন হতে পারে", "সব অণু একই রঙের হয়", "এতে পরমাণুর সংখ্যা সব সময় দ্বিগুণ হয়", "অণুর গঠন সম্পূর্ণ বিলুপ্ত হয়"], correct: 0 },
+      { question: "38.ফরায়েজি আন্দোলনের প্রধান প্রবর্তক কে ছিলেন?", options: ["তিতুমীর", "হাজী শরীয়তুল্লাহ", "দুদু মিয়া", "মজনু শাহ"], correct: 1},
+      { question: "39.নীলদর্পণ' নাটকটির রচয়িতা কে?",options: ["মাইকেল মধুসূদন দত্ত", "দীনবন্ধু মিত্র", "বঙ্কিমচন্দ্র চট্টোপাধ্যায়", "ঈশ্বরচন্দ্র বিদ্যাসাগর"],correct: 1},
+      { question: "40. সুয়েজ খাল কোন দুটি সাগরকে যুক্ত করেছে?",options: ["ভূমধ্যসাগর ও লোহিত সাগর", "কৃষ্ণসাগর ও কাস্পিয়ান সাগর", "আরব সাগর ও বঙ্গোপসাগর", "উত্তর সাগর ও বাল্টিক সাগর"], correct: 0 }
+    ];
+
+    let userName = "";
+    let currentQuestionIndex = 0;
+    let totalScore = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let userWrongQuestions = []; 
+
+    function startQuiz() {
+      const nameInput = document.getElementById('user-name').value.trim();
+      if(nameInput === "") {
+        alert("Please enter your name!");
+        return;
+      }
+      userName = nameInput;
+      document.getElementById('display-name').innerText = `শিক্ষার্থী: ${userName}`;
+      document.getElementById('user-info-view').style.display = 'none';
+      document.getElementById('quiz-view').style.display = 'block';
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const currentData = questionsDatabase[currentQuestionIndex];
+      document.getElementById('next-btn').style.display = 'none';
+      const optionsGrid = document.getElementById('options-grid');
+      optionsGrid.innerHTML = '';
+
+      document.getElementById('progress-text').innerText = `প্রশ্ন ${currentQuestionIndex + 1}/${questionsDatabase.length}`;
+      document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questionsDatabase.length) * 100}%`;
+      document.getElementById('question-title').innerText = currentData.question;
+
+      currentData.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'option-btn';
+        button.innerText = option;
+        button.onclick = () => selectOption(index, button);
+        optionsGrid.appendChild(button);
+      });
+    }
+
+    function selectOption(selectedIndex, selectedBtn) {
+      const currentData = questionsDatabase[currentQuestionIndex];
+      const allButtons = document.querySelectorAll('.option-btn');
+      allButtons.forEach(btn => btn.disabled = true);
+
+      if (selectedIndex === currentData.correct) {
+        selectedBtn.classList.add('correct');
+        totalScore += 1;
+        correctCount++;
+      } else {
+        selectedBtn.classList.add('wrong');
+        allButtons[currentData.correct].classList.add('correct');
+        totalScore -= 0.25;
+        wrongCount++;
+        
+        userWrongQuestions.push({
+          question: currentData.question,
+          selectedAnswer: currentData.options[selectedIndex],
+          correctAnswer: currentData.options[currentData.correct]
+        });
+      }
+
+      document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function handleNextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questionsDatabase.length) {
+        loadQuestion();
+      } else {
+        submitResultsToDatabase();
+      }
+    }
+
+    function submitResultsToDatabase() {
+      document.getElementById('quiz-view').style.display = 'none';
+      document.getElementById('result-view').style.display = 'block';
+
+      document.getElementById('final-score').innerText = totalScore.toFixed(2);
+      document.getElementById('correct-count').innerText = correctCount;
+      document.getElementById('wrong-count').innerText = wrongCount;
+
+      db.collection("quiz_results 3").add({
+        name: userName,
+        score: totalScore.toFixed(2),
+        correct: correctCount,
+        wrong: wrongCount,
+        wrongQuestions: userWrongQuestions,
+        time: new Date()
+      })
+      .then(() => {
+        console.log("ফলাফল সফলভাবে জমা হয়েছে!");
+      })
+      .catch((error) => {
+        console.error("ডাটা সেভ করতে সমস্যা হয়েছে: ", error);
+      });
+    }
+  </script>
+</body> 
+</html>
