@@ -10,117 +10,293 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
   <style>
+    :root {
+      --primary-color: #4f46e5;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8fafc;
-      color: #0f172a;
-      padding: 20px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 30px 20px;
       margin: 0;
     }
+
     .container {
-      max-width: 900px;
+      max-width: 950px;
       margin: 0 auto;
     }
-    h1 {
+
+    .header-title {
       text-align: center;
       margin-bottom: 25px;
-      color: #4f46e5;
     }
-    .card {
-      background: #ffffff;
+
+    .header-title h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary-color);
+      margin: 0 0 5px 0;
+      letter-spacing: -0.5px;
+    }
+
+    .header-title p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 15px;
+    }
+
+    /* 📊 Analytics Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 16px 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      padding: 20px;
-      margin-bottom: 20px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      text-align: center;
     }
+
+    .stat-card h3 {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary-color);
+    }
+
+    /* 🔍 Search Input */
+    .search-box {
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 15px;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      outline: none;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      box-sizing: border-box;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* 📄 Result Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      padding: 22px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #f1f5f9;
-      padding-bottom: 10px;
+      padding-bottom: 12px;
       margin-bottom: 15px;
     }
+
     .student-name {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       color: #1e293b;
     }
+
     .score-badge {
       background: #e0e7ff;
-      color: #4f46e5;
-      padding: 6px 14px;
+      color: var(--primary-color);
+      padding: 6px 16px;
       border-radius: 20px;
-      font-weight: 700;
+      font-weight: 800;
+      font-size: 15px;
     }
+
     .stats {
       display: flex;
       gap: 20px;
       font-size: 14px;
-      margin-bottom: 15px;
+      margin-bottom: 18px;
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
     }
+
     .wrong-sec-title {
       font-weight: 700;
       color: #ef4444;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
     .wrong-item {
       background: #fef2f2;
       border-left: 4px solid #ef4444;
-      padding: 10px 14px;
-      border-radius: 6px;
+      padding: 12px 16px;
+      border-radius: 8px;
       margin-bottom: 10px;
       font-size: 14px;
+      line-height: 1.5;
     }
+
     .wrong-item strong {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      color: #991b1b;
     }
+
     .selected-ans {
       color: #dc2626;
+      font-weight: 600;
     }
+
     .correct-ans {
       color: #16a34a;
+      font-weight: 600;
+    }
+
+    .loader {
+      text-align: center;
+      padding: 40px;
+      font-size: 16px;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>SUMU EXAM RESULTS DESHBOARD</h1>
-    <div id="results-container">ডাটা লোড হচ্ছে...</div>
+    <div class="header-title">
+      <h1>SUMU EXAM RESULTS DASHBOARD</h1>
+      <p>MCQ THIRD EXAM ANALYTICS AND RESULTS</p>
+    </div>
+
+    <!-- 📊 Summary Analytics Section -->
+    <div class="summary-grid">
+      <div class="stat-card">
+        <h3>total exams</h3>
+        <div class="value" id="total-students">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>সর্বোচ্চ নম্বর</h3>
+        <div class="value" id="top-score">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>গড় নম্বর</h3>
+        <div class="value" id="avg-score">0</div>
+      </div>
+    </div>
+
+    <!-- 🔍 Search Bar -->
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="🔍 Search results by your name..." onkeyup="filterResults()">
+    </div>
+
+    <!-- 📄 Results List -->
+    <div id="results-container">
+      <div class="loader">ডাটা লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...</div>
+    </div>
   </div>
 
   <script>
-    // ⚙️ আপনার মূল index.html-এর ফায়ারবেজ কনফিগারেশনটি এখানেও বসাবেন
+    // ⚙️ আপনার আসল ফায়ারবেজ কনফিগারেশন
     const firebaseConfig = {
       apiKey: "AIzaSyCTgSqtcDRtvfbIECDFEv_2jAEgModArXc",
-  authDomain: "gk-exam-2.firebaseapp.com",
-  projectId: "gk-exam-2",
-  storageBucket: "gk-exam-2.firebasestorage.app",
-  messagingSenderId: "52008698353",
-  appId: "1:52008698353:web:08a24e1451711ab72f0450",
+      authDomain: "gk-exam-2.firebaseapp.com",
+      projectId: "gk-exam-2",
+      storageBucket: "gk-exam-2.firebasestorage.app",
+      messagingSenderId: "52008698353",
+      appId: "1:52008698353:web:08a24e1451711ab72f0450",
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const resultsContainer = document.getElementById('results-container');
+    let allExamData = [];
 
-    // ফায়ারবেজ থেকে ফলাফল লোড করা
+    // ফায়ারবেজ থেকে ডাটা নিয়ে আসা
     db.collection("quiz_results 3").orderBy("time", "desc").get()
     .then((querySnapshot) => {
-      resultsContainer.innerHTML = '';
-
       if (querySnapshot.empty) {
-        resultsContainer.innerHTML = '<p style="text-align:center;">এখনও কেউ পরীক্ষা দেয়নি।</p>';
+        resultsContainer.innerHTML = '<p style="text-align:center; padding: 40px; color: var(--text-muted);">এখনও কেউ পরীক্ষা দেয়নি।</p>';
         return;
       }
 
+      allExamData = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        
+        allExamData.push(doc.data());
+      });
+
+      calculateAnalytics(allExamData);
+      renderResults(allExamData);
+    })
+    .catch((error) => {
+      console.error("ডাটা আনতে সমস্যা হয়েছে: ", error);
+      resultsContainer.innerHTML = '<p style="color:#ef4444; text-align:center; padding: 30px;">ডাটা লোড করতে সমস্যা হয়েছে। Firebase Rules বা Config চেক করুন।</p>';
+    });
+
+    // 📊 অ্যানালিটিক্স হিসেব করা
+    function calculateAnalytics(dataList) {
+      const total = dataList.length;
+      document.getElementById('total-students').innerText = total;
+
+      if (total === 0) return;
+
+      const scores = dataList.map(item => parseFloat(item.score) || 0);
+      const maxScore = Math.max(...scores);
+      const sumScore = scores.reduce((a, b) => a + b, 0);
+      const avgScore = (sumScore / total).toFixed(2);
+
+      document.getElementById('top-score').innerText = maxScore.toFixed(2);
+      document.getElementById('avg-score').innerText = avgScore;
+    }
+
+    // 📄 কার্ডগুলো রেন্ডার করা
+    function renderResults(dataList) {
+      resultsContainer.innerHTML = '';
+
+      if(dataList.length === 0) {
+        resultsContainer.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 20px;">কোনো রেজাল্ট পাওয়া যায়নি!</p>';
+        return;
+      }
+
+      dataList.forEach((data) => {
         let wrongListHTML = '';
         if (data.wrongQuestions && data.wrongQuestions.length > 0) {
           data.wrongQuestions.forEach((item) => {
@@ -133,13 +309,13 @@
             `;
           });
         } else {
-          wrongListHTML = '<p style="color:#16a34a; font-weight:600;">কোনো প্রশ্ন ভুল করেনি! (সবগুলো সঠিক)</p>';
+          wrongListHTML = '<p style="color:#16a34a; font-weight:600; margin: 5px 0;">🎉 কোনো প্রশ্ন ভুল করেনি! (সবগুলো সঠিক)</p>';
         }
 
         const cardHTML = `
           <div class="card">
             <div class="card-header">
-              <div class="student-name">শিক্ষার্থী: ${data.name}</div>
+              <div class="student-name">👤 শিক্ষার্থী: ${data.name}</div>
               <div class="score-badge">স্কোর: ${data.score}</div>
             </div>
             <div class="stats">
@@ -147,18 +323,23 @@
               <span>ভুল: <strong style="color:#dc2626;">${data.wrong}</strong></span>
               <span>তারিখ: ${data.time ? new Date(data.time.toDate()).toLocaleString('bn-BD') : 'N/A'}</span>
             </div>
-            <div class="wrong-sec-title">ভুল করা প্রশ্নের তালিকা:</div>
+            <div class="wrong-sec-title">⚠️ ভুল করা প্রশ্নের তালিকা:</div>
             ${wrongListHTML}
           </div>
         `;
 
         resultsContainer.innerHTML += cardHTML;
       });
-    })
-    .catch((error) => {
-      console.error("ডাটা আনতে সমস্যা হয়েছে: ", error);
-      resultsContainer.innerHTML = '<p style="color:red; text-align:center;">ডাটা লোড করতে সমস্যা হয়েছে। Firebase Config ঠিক আছে কিনা চেক করুন।</p>';
-    });
+    }
+
+    // 🔍 সার্চ ফিল্টারিং ফাংশন
+    function filterResults() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const filtered = allExamData.filter(student => 
+        student.name.toLowerCase().includes(query)
+      );
+      renderResults(filtered);
+    }
   </script>
 </body>
 </html>
